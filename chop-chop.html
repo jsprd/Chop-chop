@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en-SG">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chopper!</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+    }
+
+    .container {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .dark-mode {
+      background-color: black;
+      color: white;
+    }
+
+    #progressBar {
+      width: 100%;
+      height: 20px;
+      background-color: lightgray;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
+    #progressBarFill {
+      height: 100%;
+      background-color: green;
+      width: 0%;
+    }
+
+    #remainingHours {
+      font-weight: bold;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div>
+    <div id="progressBar">
+      <div id="progressBarFill"></div>
+    </div>
+
+    <h1>Chopper!</h1>
+<p>This HTML page allows you to record the time whenever you press a button. The recorded time is stored in your browser for a day. You can also view the recorded time plus 9 hours, clear the recorded time, and edit the recorded time.</p>
+<p>Notes:</p>
+<ul>
+  <li>If the page is opened and there's no existing recorded time, it will automatically record the current time.</li>
+  <li>The recorded time is stored in your browser's local storage and will be available for a day.</li>
+  <li>You can only edit the time in hours, minutes, and seconds format (HH:mm:ss).</li>
+  <li>The page switches to dark mode when there's a recorded time and reverts to light mode when the time is cleared or there's no record available.</li>
+</ul>
+    <button onclick="recordTime()">Tap Here Lah</button>
+
+    <p id="timeDisplay">Time when button chop will be shown here.</p>
+
+    <p id="timeDisplayPlus9">Time when button chop plus 9 hours will be shown here.</p>
+
+    <p id="remainingHours">Remaining hours left to check out: </p>
+
+    <button onclick="clearTime()">Clear Time</button>
+
+    <button onclick="editTime()">Edit Time</button>
+  </div>
+</div>
+
+<script>
+function recordTime() {
+  var now = new Date();
+  var expirationTime = new Date();
+  expirationTime.setDate(expirationTime.getDate() + 1); // Time one day from now
+  var display = document.getElementById('timeDisplay');
+  var displayPlus9 = document.getElementById('timeDisplayPlus9');
+  display.textContent = 'Time when button chop: ' + now.toLocaleString();
+  localStorage.setItem('buttonChopTime', now.getTime()); // Save button chop time in local storage
+  localStorage.setItem('expiryTime', expirationTime.getTime()); // Save expiry time
+  var nowPlus9 = new Date(now.getTime() + 9 * 60 * 60 * 1000); // Time plus 9 hours
+  displayPlus9.textContent = 'Time when button chop plus 9 hours: ' + nowPlus9.toLocaleString();
+
+  // Toggle dark mode
+  document.body.classList.add('dark-mode');
+  updateProgressBar(); // Update progress bar
+  updateRemainingHours(nowPlus9.getTime()); // Update remaining hours
+}
+
+function clearTime() {
+  if (window.confirm("This action will clear the current time record. Are you sure you want to proceed?")) {
+    localStorage.removeItem('buttonChopTime'); // Clear saved time
+    localStorage.removeItem('expiryTime');
+    var display = document.getElementById('timeDisplay');
+    var displayPlus9 = document.getElementById('timeDisplayPlus9');
+    display.textContent = 'Time cleared lor.';
+    displayPlus9.textContent = '';
+    document.getElementById('remainingHours').textContent = 'Remaining hours left to check out: ';
+
+    // Remove dark mode if no record saved
+    if (!localStorage.getItem('buttonChopTime')) {
+      document.body.classList.remove('dark-mode');
+    }
+    updateProgressBar(); // Update progress bar
+  }
+}
+
+function editTime() {
+  var newTime = prompt("Enter new time lah (format: HH:mm:ss):");
+  if (newTime) {
+    var currentTime = new Date();
+    var editedTime = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), newTime.split(':')[0], newTime.split(':')[1], newTime.split(':')[2]);
+    if (!isNaN(editedTime.getTime())) {
+      var display = document.getElementById('timeDisplay');
+      var displayPlus9 = document.getElementById('timeDisplayPlus9');
+      display.textContent = 'Edited time leh: ' + editedTime.toLocaleString();
+      localStorage.setItem('buttonChopTime', editedTime.getTime()); // Save edited time in local storage
+      var editedTimePlus9 = new Date(editedTime.getTime() + 9 * 60 * 60 * 1000); // Edited time plus 9 hours
+      displayPlus9.textContent = 'Edited time plus 9 hours: ' + editedTimePlus9.toLocaleString();
+
+      // Change to dark mode when editing saved time
+      document.body.classList.add('dark-mode');
+      updateProgressBar(); // Update progress bar
+      updateRemainingHours(editedTimePlus9.getTime()); // Update remaining hours
+    } else {
+      alert("Wah lau, the time format is jialat leh!");
+    }
+  }
+}
+
+// Check if time is saved when the page loads, and update display
+window.onload = function() {
+  var lastChopTime = localStorage.getItem('buttonChopTime');
+  var expiryTime = localStorage.getItem('expiryTime');
+  var display = document.getElementById('timeDisplay');
+  var displayPlus9 = document.getElementById('timeDisplayPlus9');
+  if (!lastChopTime && !expiryTime) {
+    recordTime();
+  } else if (lastChopTime && expiryTime) {
+    if (new Date().getTime() <= expiryTime) { // If current time is before expiry time
+      display.textContent = 'Last chop time: ' + new Date(parseInt(lastChopTime, 10)).toLocaleString();
+      var lastChopTimePlus9 = new Date(parseInt(lastChopTime, 10) + 9 * 60 * 60 * 1000); // Last chop time plus 9 hours
+      displayPlus9.textContent = 'Last chop time plus 9 hours: ' + lastChopTimePlus9.toLocaleString();
+      document.body.classList.add('dark-mode'); // Change to dark mode when record is saved
+      updateProgressBar(); // Update progress bar
+      updateRemainingHours(lastChopTimePlus9.getTime()); // Update remaining hours
+    } else {
+      clearTime(); // Clear expired time
+    }
+  }
+};
+
+// Function to update progress bar based on current time and expiry time
+function updateProgressBar() {
+  var expiryTime = localStorage.getItem('expiryTime');
+  if (expiryTime) {
+    var currentTime = new Date().getTime();
+    var totalTime = expiryTime - parseInt(localStorage.getItem('buttonChopTime'), 10);
+    var elapsedTime = currentTime - parseInt(localStorage.getItem('buttonChopTime'), 10);
+    var progress = (elapsedTime / totalTime) * 100;
+    if (progress > 100) {
+      progress = 100; // Cap progress at 100%
+    }
+    document.getElementById('progressBarFill').style.width = progress + '%';
+  }
+}
+
+// Function to update remaining hours
+function updateRemainingHours(endTime) {
+  var remainingTime = endTime - new Date().getTime();
+  var remainingHours = Math.floor(remainingTime / (1000 * 60 * 60));
+  document.getElementById('remainingHours').innerHTML = 'Remaining hours left to check out: <span style="color:red;">' + remainingHours + '</span>';
+}
+</script>
+
+</body>
+</html>
