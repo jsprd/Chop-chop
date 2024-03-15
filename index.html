@@ -156,17 +156,22 @@ window.onload = function() {
   }
 };
 
-// Function to update progress bar based on current time and expiry time
+// Function to update progress bar based on current time and chop time plus 9 hours
 function updateProgressBar() {
-  var expiryTime = localStorage.getItem('expiryTime');
-  if (expiryTime) {
+  var chopTime = localStorage.getItem('buttonChopTime');
+  if (chopTime) {
+    var chopTimePlus9 = new Date(parseInt(chopTime, 10) + 9 * 60 * 60 * 1000); // Chop time plus 9 hours
     var currentTime = new Date().getTime();
-    var totalTime = expiryTime - parseInt(localStorage.getItem('buttonChopTime'), 10);
-    var elapsedTime = currentTime - parseInt(localStorage.getItem('buttonChopTime'), 10);
-    var progress = (elapsedTime / totalTime) * 100;
+    var totalTime = chopTimePlus9.getTime() - parseInt(chopTime, 10); // Total duration
+    var elapsedTime = currentTime - parseInt(chopTime, 10); // Elapsed time
+    var progress = (elapsedTime / totalTime) * 100; // Progress percentage
+
+    // Cap progress at 100%
     if (progress > 100) {
-      progress = 100; // Cap progress at 100%
+      progress = 100;
     }
+
+    // Update progress bar fill width
     document.getElementById('progressBarFill').style.width = progress + '%';
   }
 }
